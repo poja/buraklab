@@ -1,3 +1,4 @@
+import scipy.stats as stats
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import namedtuple
@@ -52,7 +53,28 @@ def _round(coordinate):
     return round(coordinate / SPACE_RESOLUTION) * SPACE_RESOLUTION
 
 
+def sanity_check_random_walk():
+    trials = 1000
+    moves = 5
+    x_dists = []
+    y_dists = []
+    arena = Arena(1, 1)
+    for _ in range(trials):
+        trajectory = random_walk(arena, DT * moves, 0.5)
+        assert len(trajectory) == moves + 1
+        b, e = trajectory[0], trajectory[-1]
+        x_dists.append(e[0] - b[0])
+        y_dists.append(e[1] - b[1])
+
+    _, p = stats.normaltest(x_dists)
+    assert p > 0.01
+    _, p = stats.normaltest(y_dists)
+    assert p > 0.01
+
+
 if __name__ == "__main__":
+    sanity_check_random_walk()
+
     arena = Arena(1, 1)
     trajectory = random_walk(arena, 1, 0.5)
     tx = [t[0] for t in trajectory]
