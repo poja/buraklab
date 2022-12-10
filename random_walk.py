@@ -28,6 +28,7 @@ def random_walk(arena, duration, diffusion):
     for _ in np.arange(0, duration, DT):
         new_position = get_new_position(arena, current_position, diffusion)
         trajectory.append(new_position)
+        current_position = new_position
     return trajectory
 
 
@@ -53,7 +54,7 @@ def _round(coordinate):
 
 if __name__ == "__main__":
     arena = Arena(1, 1)
-    trajectory = random_walk(arena, 10, 0.5)
+    trajectory = random_walk(arena, 1, 0.5)
     tx = [t[0] for t in trajectory]
     ty = [t[1] for t in trajectory]
     plot_trajectory(arena, trajectory)
