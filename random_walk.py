@@ -1,24 +1,8 @@
 import scipy.stats as stats
 import numpy as np
 import matplotlib.pyplot as plt
-from collections import namedtuple
 
-TIME_RESOLUTION = DT = 1e-3  # sec
-SPACE_RESOLUTION = 1e-3  # meters
-
-Arena = namedtuple("Arena", ["x_height", "y_width"])
-
-
-class Arena:
-    def __init__(self, x_height, y_width):
-        self.x_height = x_height
-        self.y_width = y_width
-
-    def does_contain(self, position):
-        return (0 < position[0] < self.x_height) and (0 < position[1] < self.y_width)
-
-    def random_position(self):
-        return np.random.uniform(0, self.x_height), np.random.uniform(0, self.y_width)
+from arena import DT, SPACE_RESOLUTION, Arena
 
 
 def random_walk(arena, duration, diffusion):
