@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import math
 import numpy as np
 
-from arena import Arena, distance
+from arena import SPACE_RESOLUTION, Arena, distance
 
 
 class SpatialCell(ABC):
@@ -73,6 +73,18 @@ class GridCell(SpatialCell):
         plt.ylim([0, self.arena.y_width])
         plt.show()
 
+    def plot_firing_map(self):
+        x_dynamic_range = int(self.arena.x_height / SPACE_RESOLUTION)
+        y_dynamic_range = int(self.arena.y_width / SPACE_RESOLUTION)
+
+        firing_map = np.zeros([x_dynamic_range, y_dynamic_range])
+        for x in range(0, x_dynamic_range):
+            for y in range(0, y_dynamic_range):
+                firing_map[x][y] = self.firing_rate((x * SPACE_RESOLUTION, y * SPACE_RESOLUTION))
+
+        plt.imshow(firing_map)
+        plt.show()
+
     def firing_rate(self, position):
         # TODO which is the better model? nearest or additive?
         return self._firing_rate_nearest(position)
@@ -80,14 +92,14 @@ class GridCell(SpatialCell):
     def _firing_rate_nearest(self, position):
         dist = min(distance(field, position) for field in self.fields)
         field_rate_normalization = self.field_max_rate
-        return field_rate_normalization * math.exp(-0.5 * (dist/self.field_width) ** 2)
+        return field_rate_normalization * math.exp(-0.5 * (dist / self.field_width) ** 2)
 
     def _firing_rate_additive(self, position):
         rate = 0
         for field in self.fields:
             dist = distance(field, position)
             field_rate_normalization = self.field_max_rate
-            field_rate = field_rate_normalization * math.exp(-0.5 * (dist/self.field_width) ** 2)
+            field_rate = field_rate_normalization * math.exp(-0.5 * (dist / self.field_width) ** 2)
             rate += field_rate
         return rate
 
@@ -97,4 +109,4 @@ if __name__ == "__main__":
     grid_cell = GridCell(arena, (0.1, 0.1), 0.3, 10, 0.08, 0.3)
     print(grid_cell.firing_rate((0.1, 0.1)))
     print(grid_cell.firing_rate((0.2, 0.2)))
-    grid_cell.plot_field_centers()
+    grid_cell.plot_firing_map()
