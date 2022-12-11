@@ -1,14 +1,16 @@
+from dataclasses import dataclass
+
 import matplotlib.pyplot as plt
-from collections import namedtuple
+
 from arena import DT, Arena
 from random_walk import random_walk
-
 from spatial_cells import GridCell, SpatialCell
 
-# `cell_spikes` - a list of pairs
-#    * The first element in each pair is the cell (that was given as input)
-#    * The second element in the timepoint in which there were spikes
-Recording = namedtuple("Recording", ["trajectory", "cell_spikes"])
+
+@dataclass
+class Recording:
+    trajectory: list[(float, float)]
+    cell_spikes: list[(SpatialCell, list[float])]  # for each cell, the times of spikes
 
 
 def record_cells(trajectory, spatial_cells: list[SpatialCell]) -> Recording:

@@ -1,11 +1,8 @@
-from collections import namedtuple
 import math
 import numpy as np
 
 TIME_RESOLUTION = DT = 1e-3  # sec
 SPACE_RESOLUTION = 1e-3  # meters
-
-Arena = namedtuple("Arena", ["x_height", "y_width"])
 
 
 class Arena:
@@ -35,7 +32,7 @@ class Arena:
             distance(position, (0, 0)),
             distance(position, (0, self.y_width)),
             distance(position, (self.x_height, 0)),
-            distance(position, (self.x_height, self.y_width))
+            distance(position, (self.x_height, self.y_width)),
         )
 
 
