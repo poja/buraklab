@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 TIME_RESOLUTION = DT = 1e-3  # sec
-SPACE_RESOLUTION = 1e-3  # meters
+SPACE_RESOLUTION = 1e-2  # meters
 
 
 class Arena:

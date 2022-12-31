@@ -74,6 +74,10 @@ class GridCell(SpatialCell):
         plt.show()
 
     def plot_firing_map(self):
+        plt.imshow(self.discrete_firing_map())
+        plt.show()
+
+    def discrete_firing_map(self):
         x_dynamic_range = int(self.arena.x_height / SPACE_RESOLUTION)
         y_dynamic_range = int(self.arena.y_width / SPACE_RESOLUTION)
 
@@ -82,8 +86,7 @@ class GridCell(SpatialCell):
             for y in range(0, y_dynamic_range):
                 firing_map[x][y] = self.firing_rate((x * SPACE_RESOLUTION, y * SPACE_RESOLUTION))
 
-        plt.imshow(firing_map)
-        plt.show()
+        return firing_map
 
     def firing_rate(self, position):
         # TODO which is the better model? nearest or additive?
