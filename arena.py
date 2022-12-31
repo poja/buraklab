@@ -4,6 +4,8 @@ import numpy as np
 TIME_RESOLUTION = DT = 1e-3  # sec
 SPACE_RESOLUTION = 1e-2  # meters
 
+SAMPLES_PER_SEC = int(1 / DT)
+
 
 class Arena:
     def __init__(self, x_height, y_width):
