@@ -90,7 +90,10 @@ class GridCell(SpatialCell):
 
     def firing_rate(self, position):
         # TODO which is the better model? nearest or additive?
-        return self._firing_rate_nearest(position)
+        return self._firing_rate_additive(position)
+
+    def fisher_information_rate(self):
+        return math.sqrt(16 / 3) * math.pi * self.field_max_rate / self.field_distance**2
 
     def _firing_rate_nearest(self, position):
         dist = min(distance(field, position) for field in self.fields)

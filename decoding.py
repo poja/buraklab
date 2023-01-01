@@ -36,7 +36,7 @@ def decode_with_kernel(arena: Arena, duration: float, modules: list[DecodingModu
     # Then to get posterior we will need to "softmax": exp(..) then normalize to sum 1.
     biased_log_posterior = np.ndarray((len(modules), x_dynamic_range, y_dynamic_range))
     for i in range(len(modules)):
-        biased_log_posterior[i] = softmax(np.ones([x_dynamic_range, y_dynamic_range]))
+        biased_log_posterior[i] = _normalize_probs(np.ones([x_dynamic_range, y_dynamic_range]))
 
     logging.info("Discretizing spikes")
     discretized_spikes: list[SpatialCell, list[float], int] = []  # includes module number
@@ -68,20 +68,62 @@ def _discretize_spikes(spikes: list[float], duration: float):
     return np.histogram(spikes, bins=np.arange(0, duration + DT, DT))[0]
 
 
+def _normalize_probs(arr: np.array):
+    assert np.sum(arr) != 0
+    return arr / np.sum(arr)
+
+
+def _time_constant(module_fisher_information_rate, walk_diffusion):
+    J = module_fisher_information_rate
+    return 1 / math.sqrt(2 * walk_diffusion * J)
+
+
+def decoding_example():
+    arena = Arena(1, 1)
+
+    module_spacings = [0.25, 0.4, 0.6]
+    # module_spacings = [0.4]
+    cells = []
+    for spacing in module_spacings:
+        for x in np.linspace(0, spacing, 15, endpoint=False):
+            for y in np.linspace(0, spacing, 15, endpoint=False):
+                cells.append(GridCell(arena, (x, y), 0.3, 100, 0.05, spacing))
+
+    logging.info("Simulating trajectory and spikes")
+    duration = 15
+    walk_diffusion = 0.05
+    trajectory = random_walk(arena, duration, walk_diffusion)
+    recording = record_cells(trajectory, cells)
+
+    logging.info("Starting to decode...")
+    separated_by_module = [[] for _ in range(len(module_spacings))]
+    for cell, spikes in recording.cell_spikes:
+        for spacing_i, spacing in enumerate(module_spacings):
+            if np.isclose(spacing, cell.field_distance):
+                separated_by_module[spacing_i].append((cell, spikes))
+
+    decoding_modules = []
+    for module_data in separated_by_module:
+        fisher_information_rate = len(module_data) * module_data[0][0].fisher_information_rate()
+        time_constant = _time_constant(fisher_information_rate, walk_diffusion)
+        decoding_modules.append(DecodingModule(time_constant, module_data))
+
+    posteriors = decode_with_kernel(arena, duration, decoding_modules)
+
+    logging.info("Showing posterior...")
+    f, axarr = plt.subplots(2, 4)
+    for i, timestamp in enumerate([1 * SAMPLES_PER_SEC, 4 * SAMPLES_PER_SEC, 10 * SAMPLES_PER_SEC, -1]):
+        axarr[0][i].imshow(posteriors[timestamp], cmap=colormaps.parula)
+        axarr[1][i].plot([trajectory[timestamp][1]], [trajectory[timestamp][0]], marker=".")
+        axarr[1][i].set_xbound(0, 1)
+        axarr[1][i].set_ybound(0, 1)
+        axarr[1][i].invert_yaxis()
+
+    plt.show()
+
+    IPython.embed()
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s :: %(name)s :: %(message)s")
-    arena = Arena(1, 1)
-    cells = []
-    duration = 15
-    for x in np.arange(0, 0.3, 0.05):
-        for y in np.arange(0, 0.3, 0.05):
-            cells.append(GridCell(arena, (x, y), 0.3, 5, 0.08, 0.3))
-    logging.info("Simulating trajectory and spikes")
-    trajectory = random_walk(arena, duration, 0.5)
-    recording = record_cells(trajectory, cells)
-    logging.info("Starting to decode...")
-    decoding_modules = [DecodingModule(0.2, recording.cell_spikes)]
-    posteriors = decode_with_kernel(arena, duration, decoding_modules)
-    print(len(posteriors))
-    plt.imshow(posteriors[1 * SAMPLES_PER_SEC], cmap=colormaps.parula)
-    plt.show()
+    decoding_example()
