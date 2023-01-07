@@ -34,7 +34,7 @@ def plot_spike_positions(trajectory, spike_times, marker_size=0.2):
 
 if __name__ == "__main__":
     arena = Arena(1, 1)
-    grid_cell = GridCell(arena, (0.1, 0.1), 0.3, 100, 0.08, 0.3)
+    grid_cell = GridCell(arena, (0.1, 0.1), 0.3, 100, 0.04, 0.3)
     trajectory = random_walk(arena, 200, 0.5)
     recording = record_cells(trajectory, [grid_cell])
     spike_times = recording.cell_spikes[0][1]
