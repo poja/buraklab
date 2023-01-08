@@ -1,3 +1,4 @@
+import cProfile
 import logging
 import math
 from dataclasses import dataclass
@@ -84,19 +85,33 @@ def decode_with_markov(
     all_cells = list(chain.from_iterable(m.cells_spikes for m in modules))
     discreticized_cells = [(c, c.discrete_firing_map(), _discretize_spikes(s, duration, dt)) for (c, s) in all_cells]
 
+    logging.info("Calculating the base observation likelihood - that assumes non of the grid cells spiked")
+    base_observation_loglikelihood = np.ndarray([x_dynamic_range, y_dynamic_range])
+    for (i, j) in _iterate_2d(base_observation_loglikelihood):
+        log_likelihood = 0
+        for _, firing_map, spikes in discreticized_cells:
+            firing_rate = firing_map[i][j]
+            log_likelihood += _biased_log_poisson(firing_rate, dt, 0)
+        base_observation_loglikelihood[i][j] = log_likelihood
+
     current_posterior = _normalize_probs(np.ones([x_dynamic_range, y_dynamic_range]))
     all_posteriors = []
     for timepoint_i in tqdm.tqdm(range(t_dynamic_range)):
+
+        spiked_cells = [
+            (firing_map, spikes) for (_, firing_map, spikes) in discreticized_cells if spikes[timepoint_i] > 0
+        ]
 
         # First step - calculate p(o_newest | s_newest)
         logging.debug("Calculating the likelihood of the current observation given every state")
         observation_loglikelihoods = np.ndarray([x_dynamic_range, y_dynamic_range])
         for (i, j) in _iterate_2d(observation_loglikelihoods):
-            log_likelihood = 0
-            for _, firing_map, spikes in discreticized_cells:
+            log_likelihood = base_observation_loglikelihood[i][j]
+            for firing_map, spikes in spiked_cells:
                 # Function _biased_log_poisson is biased relative to k, but k doesn't depend on position in space
                 firing_rate = firing_map[i][j]
                 log_likelihood += _biased_log_poisson(firing_rate, dt, spikes[timepoint_i])
+                log_likelihood -= _biased_log_poisson(firing_rate, dt, 0)
             observation_loglikelihoods[i][j] = log_likelihood
 
         # It's okay to normalize here because we are going to normalize anyway later
